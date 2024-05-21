@@ -5,11 +5,12 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
+import frc.robot.Constants;
 
 public class swervemodule extends SubsystemBase{
     
@@ -20,8 +21,9 @@ public class swervemodule extends SubsystemBase{
     PIDController PID;
 
     int number;
+    double offsetEnc;
 
-    public swervemodule(int moduleNumber, int ID_drive, int ID_turn, int portencoder, double kP, double kI, double kD, boolean DReversed, boolean TReversed){
+    public swervemodule(int moduleNumber, int ID_drive, int ID_turn, int portencoder, double offset, double kP, double kI, double kD, boolean DReversed, boolean TReversed){
      
         m_drive = new CANSparkMax(ID_drive, MotorType.kBrushless);
         m_turn = new CANSparkMax(ID_turn, MotorType.kBrushless);
@@ -35,7 +37,23 @@ public class swervemodule extends SubsystemBase{
         m_turn.setInverted(TReversed);
 
         number = moduleNumber;
+        offsetEnc = offset;
 
+
+    }
+
+    public SwerveModulePosition getPosition(){
+
+        return new SwerveModulePosition(getDrivePosition(), AngleEncoder());
+
+    }
+
+    public double getDrivePosition(){
+        double position;
+
+        position = m_drive.getEncoder().getPosition();
+
+        return position*Constants.meterspersecond;
     }
 
     public Rotation2d AngleEncoder(){
@@ -43,7 +61,7 @@ public class swervemodule extends SubsystemBase{
         double encoderBits = absoluteEncoder.getValue();
         double angleEncoder = (encoderBits * 360) / 4096;
 
-        return Rotation2d.fromDegrees(angleEncoder);
+        return Rotation2d.fromDegrees(angleEncoder-offsetEnc);
 
     }
 
@@ -61,7 +79,7 @@ public class swervemodule extends SubsystemBase{
 
     }
 
-    public void desiredState(SwerveModuleState desiredState){
+    public void setDesiredState(SwerveModuleState desiredState){
 
         desiredState = SwerveModuleState.optimize(desiredState, AngleEncoder());
 
@@ -74,6 +92,7 @@ public class swervemodule extends SubsystemBase{
     public void periodic (){
 
         SmartDashboard.putNumber("Angle Encoder "+ number, AngleEncoder().getDegrees());
+        SmartDashboard.putNumber("Drive position"+ number, getDrivePosition());
     }
  
 }

@@ -4,17 +4,42 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Subsystems.swervechasis;
+import frc.robot.command.driveCommand;
 
 public class RobotContainer {
+
+  private final swervechasis chasis = new swervechasis();
+
+  public CommandXboxController driverjoytick = new CommandXboxController(0);
+ 
   public RobotContainer() {
-    configureBindings();
+   
+    driveCommand commandDrive = new driveCommand(chasis,
+      ()-> driverjoytick.getRawAxis(XboxController.Axis.kLeftX.value),
+      ()-> driverjoytick.getRawAxis(XboxController.Axis.kLeftY.value),
+      ()-> driverjoytick.getRawAxis(XboxController.Axis.kRightX.value));
+
+
+    chasis.setDefaultCommand(commandDrive
+    );
+
+    configureBindings(); 
+
   }
 
-  private void configureBindings() {}
-
+  private void configureBindings() { 
+  
+  }
+  
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return Commands.print("No autonomo");
+    
   }
+  
 }
+
