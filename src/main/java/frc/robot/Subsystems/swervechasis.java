@@ -11,6 +11,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -23,18 +25,21 @@ import frc.robot.Constants.frontRight;
 public class swervechasis extends SubsystemBase {
 
     AHRS navX =  new AHRS(SPI.Port.kMXP);
-    double navXoffset = 170;
+    double navXoffset = 0;
 
     double distancia = 39;
-    Translation2d FLTranslation = new Translation2d(-distancia, -distancia);
-    Translation2d FRTranslation = new Translation2d(-distancia, distancia);
-    Translation2d BLTranslation = new Translation2d(distancia, -distancia);
-    Translation2d BRTranslation = new Translation2d(distancia, distancia);
+    Translation2d FLTranslation = new Translation2d(distancia, distancia);
+    Translation2d FRTranslation = new Translation2d(distancia, -distancia);
+    Translation2d BLTranslation = new Translation2d(-distancia, distancia);
+    Translation2d BRTranslation = new Translation2d(-distancia, -distancia);
 
     // Creacion del metodo de la kinematica 
     SwerveDriveKinematics kinematics = new SwerveDriveKinematics(FLTranslation, FRTranslation, BLTranslation, BRTranslation);
     //Creacion del metodo para lo odometria 
     
+    private final StructArrayPublisher<SwerveModuleState> publisher;
+
+    private final StructArrayPublisher<Rotation2d> publisher2;
     
     
 
@@ -47,7 +52,8 @@ public class swervechasis extends SubsystemBase {
             frontLeft.kI, 
             frontLeft.kD, 
             frontLeft.DrivemotorReversed, 
-            frontLeft.TurnmotorReversed);
+            frontLeft.TurnmotorReversed,
+            frontLeft.PIDSTATUS);
         
         
     private swervemodule FrontRight = new swervemodule(2,
@@ -59,7 +65,8 @@ public class swervechasis extends SubsystemBase {
             frontRight.kI, 
             frontRight.kD, 
             frontRight.DrivemotorReversed, 
-            frontRight.TurnmotorReversed);
+            frontRight.TurnmotorReversed,
+            frontRight.PIDSTATUS);
         
     private swervemodule BackLeft = new swervemodule(3,
             backLeft.DrivePort, 
@@ -70,7 +77,8 @@ public class swervechasis extends SubsystemBase {
             backLeft.kI, 
             backLeft.kD, 
             backLeft.DrivemotorReversed, 
-            backLeft.TurnmotorReversed);
+            backLeft.TurnmotorReversed,
+            backLeft.PIDSTATUS);
         
     private  swervemodule BackRight = new swervemodule(4,
             backRight.DrivePort, 
@@ -81,7 +89,8 @@ public class swervechasis extends SubsystemBase {
             backRight.kI, 
             backRight.kD, 
             backRight.DrivemotorReversed, 
-            backRight.TurnmotorReversed);
+            backRight.TurnmotorReversed,
+            backRight.PIDSTATUS);
 
     SwerveModulePosition positions[] = {FrontLeft.getPosition(), FrontRight.getPosition(), BackLeft.getPosition(), BackRight.getPosition()};
 
@@ -91,15 +100,23 @@ public class swervechasis extends SubsystemBase {
     
     
     public swervechasis(){
+
         navX.setAngleAdjustment(navXoffset);
+
+        publisher = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("/SwerveStates", SwerveModuleState.struct).publish();
+    
+        publisher2 = NetworkTableInstance.getDefault()
+      .getStructArrayTopic("/RobotRotation", Rotation2d.struct).publish();
+        
     }   
 
     // Creacion del metodo para los tipos de velocidades
     public void setChassisSpeed(double speedX, double speedY, double speedZ){
 
         // Asignacion de las velocidades ya creadas a los modulos 
-        SwerveModuleState[] states = kinematics.toSwerveModuleStates(new ChassisSpeeds(speedX, speedY, speedZ*0.2));
-        SwerveDriveKinematics.desaturateWheelSpeeds(states, 0.7);
+        SwerveModuleState[] states = kinematics.toSwerveModuleStates(new ChassisSpeeds(speedX, speedY, speedZ));
+        SwerveDriveKinematics.desaturateWheelSpeeds(states, 0.5);
 
         setModuleStates(states);
 
@@ -107,7 +124,7 @@ public class swervechasis extends SubsystemBase {
 
     // Creacion del metodo para las velocidades orientadas al campo 
     public void setFieldOrientedSpeed(double speedX, double speedY, double speedZ) {
-        ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, speedZ * 0.2, getRotation2d());
+        ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, speedZ, getRotation2d());
         
         SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);
 
@@ -153,9 +170,16 @@ public class swervechasis extends SubsystemBase {
         positions[1] = FrontRight.getPosition();
         positions[2] = BackLeft.getPosition();
         positions[3] = BackRight.getPosition();
+
+        publisher.set(new SwerveModuleState[] {FrontLeft.gModuleState(), FrontRight.gModuleState(), BackLeft.gModuleState(), BackRight.gModuleState()});
         
+
         //Actualizacion de la posicion segun la odometria 
         odometry.update(getRotation2d(), positions); 
+
+        publisher2.set(new Rotation2d[] {odometry.getPoseMeters().getRotation()});
+
+       
 
     }
 }

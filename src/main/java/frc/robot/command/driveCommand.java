@@ -43,7 +43,7 @@ public class driveCommand extends Command {
         }
 
         //chasis.setFieldOrientedSpeed(X, Y, Z);
-        chasis.setChassisSpeed(X, Y, Z);
+        chasis.setChassisSpeed(X, Y, Z * 0.5);
     }
     @Override
     public void end(boolean interrupted) {

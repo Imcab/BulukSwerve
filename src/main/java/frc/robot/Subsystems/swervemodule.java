@@ -26,8 +26,10 @@ public class swervemodule extends SubsystemBase{
     int number;
     double offsetEnc;
 
+    double PIDCONTROLLERSTATUS;
+
     //Creacion del metodo principal 
-    public swervemodule(int moduleNumber, int ID_drive, int ID_turn, int portencoder, double offset, double kP, double kI, double kD, boolean DReversed, boolean TReversed){
+    public swervemodule(int moduleNumber, int ID_drive, int ID_turn, int portencoder, double offset, double kP, double kI, double kD, boolean DReversed, boolean TReversed, double PIDSTATUS){
      
         // Asignacion de valroes a cada variable
         m_drive = new CANSparkMax(ID_drive, MotorType.kBrushless);
@@ -36,23 +38,17 @@ public class swervemodule extends SubsystemBase{
         absoluteEncoder = new AnalogInput(portencoder);
 
         PID = new PIDController(kP, kI, kD);
+        PID.enableContinuousInput(-180, 180);
 
-        
         m_drive.setInverted(DReversed);
         m_turn.setInverted(TReversed);
 
         number = moduleNumber;
         offsetEnc = offset;
-
-
+        PIDCONTROLLERSTATUS = PIDSTATUS;
     }
 
     // Metodo para obtener la posicion de cada modulo 
-    
-
-    public SwerveModuleState gModuleState(){
-        return new SwerveModuleState(getDriveVel(), new Rotation2d(getTurningPosition()));
-    }
 
     //Metodo para obtener la posicion de al manejar 
     public double getDrivePosition(){
@@ -61,17 +57,6 @@ public class swervemodule extends SubsystemBase{
         position = m_drive.getEncoder().getPosition();
 
         return position*Constants.meterspersecond;
-    }
-    public double getTurningPosition(){
-        double turn = m_turn.getEncoder().getPosition();
-        return turn;
-    }
-
-    public double getDriveVel(){
-        double vel = m_drive.getEncoder().getVelocity();
-        
-
-        return vel;
     }
 
     //Metodo para definir como van a funcionar los encoders
@@ -94,9 +79,10 @@ public class swervemodule extends SubsystemBase{
     //Metodo para definir el PID con los encoders 
     public void setAngle(SwerveModuleState desiredState){
 
-        double PIDvalue = PID.calculate(AngleEncoder().getDegrees(), desiredState.angle.getDegrees());
+        double PIDvalue = PID.calculate(AngleEncoder().getDegrees(), desiredState.angle.getDegrees()); 
 
-        m_turn.set(-PIDvalue);
+        //m_turn.set(-PIDvalue);
+        m_turn.set(PIDCONTROLLERSTATUS * PIDvalue);
 
     }
 
@@ -110,10 +96,24 @@ public class swervemodule extends SubsystemBase{
 
     }
 
+    public double getTurnPosition(){
+        double position = m_turn.getEncoder().getPosition();
+        return position * Constants.meterspersecond;
+    }
+
+    public double getDriveVelocity(){
+        double vel = m_drive.getEncoder().getVelocity();
+        return vel * Constants.meterspersecond;
+    }
+
     public SwerveModulePosition getPosition(){
 
         return new SwerveModulePosition(getDrivePosition(), AngleEncoder());
 
+    }
+
+    public SwerveModuleState gModuleState(){
+        return new SwerveModuleState(getDrivePosition(), new Rotation2d(AngleEncoder().getRotations()));
     }
 
     @Override
@@ -122,6 +122,7 @@ public class swervemodule extends SubsystemBase{
         // Mostrar valores del angulo y la forma de manejo 
         SmartDashboard.putNumber("Angle Encoder "+ number, AngleEncoder().getDegrees());
         SmartDashboard.putNumber("Drive position"+ number, getDrivePosition());
+        SmartDashboard.putNumber("Turn velocity " + number, getTurnPosition());
     }
  
 }
