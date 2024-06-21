@@ -28,10 +28,10 @@ public class swervechasis extends SubsystemBase {
     double navXoffset = 0;
 
     double distancia = 39;
-    Translation2d FLTranslation = new Translation2d(distancia, distancia);
-    Translation2d FRTranslation = new Translation2d(distancia, -distancia);
-    Translation2d BLTranslation = new Translation2d(-distancia, distancia);
-    Translation2d BRTranslation = new Translation2d(-distancia, -distancia);
+    Translation2d FLTranslation = new Translation2d(distancia, -distancia); // + +
+    Translation2d FRTranslation = new Translation2d(distancia, distancia); // + -
+    Translation2d BLTranslation = new Translation2d(-distancia, -distancia); // - +
+    Translation2d BRTranslation = new Translation2d(-distancia, distancia);  // - -
 
     // Creacion del metodo de la kinematica 
     SwerveDriveKinematics kinematics = new SwerveDriveKinematics(FLTranslation, FRTranslation, BLTranslation, BRTranslation);
