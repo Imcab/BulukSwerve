@@ -179,6 +179,10 @@ public class swervechasis extends SubsystemBase {
         return odometry.getPoseMeters();
     }
 
+    public void PoseReset(){
+        odometry.resetPosition(getRotation2d(), positions, new Pose2d(0, 0, getRotation2d()));
+    }
+
 
     @Override
     public void periodic(){

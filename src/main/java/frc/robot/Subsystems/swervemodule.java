@@ -24,12 +24,15 @@ public class swervemodule extends SubsystemBase{
     RelativeEncoder enc_drive, enc_turn;
 
     AnalogInput absoluteEncoder;
+    
+
     PIDController PID;
 
     int number;
     double offsetEnc;
 
     double PIDCONTROLLERSTATUS;
+
 
     //Creacion del metodo principal 
     public swervemodule(int moduleNumber, int ID_drive, int ID_turn, int portencoder, double offset, double kP, double kI, double kD, boolean DReversed, boolean TReversed, double PIDSTATUS){

@@ -6,6 +6,7 @@ public class Constants {
 
     public static final double meterspersecond = 5.7912;
     public static final double angvel = meterspersecond / 0.40;
+    
     public static final double driveGratio = 1 / 5.35;
     public static final double turnGratio = 1 / 18.75;
     public static final double encDrot2met = driveGratio * Math.PI * Units.inchesToMeters(4); //rotación a metros (drive)
